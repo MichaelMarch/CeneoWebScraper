@@ -132,4 +132,4 @@ dmypy.json
 .vscode
 
 # projekt
-opinions/*.*
+app/opinions/*.*

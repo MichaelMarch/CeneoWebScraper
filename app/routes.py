@@ -1,7 +1,12 @@
+import re
 from app import app
-from flask import render_template, redirect, url_for
+from flask import render_template, redirect, url_for, request
 import requests
 import json
+import os
+import numpy as np
+from matplotlib import pyplot as plt
+import pandas as pd
 from bs4 import BeautifulSoup
 
 
@@ -37,8 +42,13 @@ def index(name="Hello World!"):
     return render_template("index.html.jinja", text=name)
 
 
-@app.route("/extract/<product_id>")
-def extract(product_id):
+@app.route("/extract/", methods=["GET", "POST"])
+def extract():
+    if not request.method == "POST":
+        return render_template("extract.html.jinja")
+
+    product_id = request.form.get("product_id")
+
     url = f"https://www.ceneo.pl/{product_id}#tab-reviews"
     all_opinions = []
 
@@ -67,7 +77,11 @@ def extract(product_id):
         except TypeError:
             url = None
 
-    with open(f"opinions/opinions_{product_id}.json", "w", encoding="utf-8") as file:
+    dir = "app/opinions/"
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
+    with open(f"{dir}opinions_{product_id}.json", "w", encoding="utf-8") as file:
         json.dump(all_opinions, file, indent=4, ensure_ascii=False)
 
     return redirect(url_for('product', product_id=product_id))
@@ -75,7 +89,8 @@ def extract(product_id):
 
 @app.route("/products")
 def products():
-    pass
+    products = [file[:file.rfind('.')] for file in os.listdir("app/opinions/")]
+    return render_template("products.html.jinja", products=products)
 
 
 @app.route("/author")
@@ -85,4 +100,41 @@ def author():
 
 @app.route("/product/<product_id>")
 def product(product_id):
-    return render_template("product.html.jinja", product_id=product_id)
+    opinions = pd.read_json(f"app/opinions/opinions_{product_id}.json")
+    opinions["stars"] = opinions["stars"].map(
+        lambda x: float(x.split('/')[0].replace(",", ".")))
+
+    stats = {
+        "opinions_count" : len(opinions),
+        "pros_count" : opinions["pros"].map(bool).sum(),
+        "cons_count" : opinions["cons"].map(bool).sum(),
+        "average_score" : opinions["stars"].mean().round(2)
+    }
+    if not os.path.exists("app/plots"):
+        os.makedirs("app/plots")
+    recomendation = opinions["recomendation"].value_counts(
+        dropna=False).sort_index().reindex(["Nie polecam", "Polecam", None], fill_value=0)
+    recomendation.plot.pie(
+        label="",
+        autopct=lambda p: "{:.1f}%".format(round(p)) if p > 0 else "",
+        colors=["crimson", "forestgreen", "grey"],
+        labels=["Nie polecam", "Polecam", "Nie mam zdania"]
+    )
+    plt.title("Rekomendacje")
+    plt.savefig(f"app/plots/plot_{product_id}_recomendations.png")
+    plt.close()
+
+    stars = opinions["stars"].value_counts().sort_index().reindex(
+        list(np.arange(0, 5.5, 0.5)))
+    plot = stars.plot.bar(
+        color="pink"
+    )
+    plt.title("Oceny produktu")
+    plt.xlabel("Liczba gwiazdek")
+    plt.ylabel("liczba opinii")
+    plt.grid(True, axis="y")
+    plt.xticks(rotation=0)
+    plt.savefig(f"app/plots/plot_{product_id}_stars.png")
+    plt.close()
+
+    return render_template("product.html.jinja", product_id=product_id, stats=stats, opinions=opinions)
