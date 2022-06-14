@@ -1,16 +1,14 @@
 from app import app
 from flask import render_template, redirect, url_for, request
-import json
 import os
 from app.models.product import Product
 
 
-@app.route('/')
-def index(name="Hello World!"):
-    return render_template("index.html.jinja", text=name)
+@app.route("/")
+def index():
+    return render_template("index.html.jinja")
 
-
-@app.route("/extract/", methods=["GET", "POST"])
+@app.route("/extract", methods=["GET", "POST"])
 def extract():
     if not request.method == "POST":
         return render_template("extract.html.jinja")
@@ -26,17 +24,7 @@ def extract():
     else:
         error = "Ups... coś poszło nie tak"
         return render_template("extract.html.jinja", error=error)
-
-    all_opinions = []
-
-    dir = "app/opinions/"
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-
-    with open(f"{dir}{product_id}.json", "w", encoding="utf-8") as file:
-        json.dump(all_opinions, file, indent=4, ensure_ascii=False)
-
-    return redirect(url_for('product', product_id=product_id))
+    return redirect(url_for('product', product_id=product_id))     
 
 
 @app.route("/products")
@@ -52,4 +40,8 @@ def author():
 
 @app.route("/product/<product_id>")
 def product(product_id):
-    return render_template("product.html.jinja", product_id=product_id)
+    product = Product(product_id)
+    product.import_product()
+    stats = product.stats_to_dict()
+    opinions = product.opinions_to_df()
+    return render_template("product.html.jinja", product_id=product_id, stats=stats, opinions=opinions)
