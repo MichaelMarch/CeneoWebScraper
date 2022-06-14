@@ -2,10 +2,10 @@ from app.utils import get_item
 from app.parameters import selectors
 
 class Opinion:
-    def __init__(self, opinion_id = 0, author = "", recommendation="", stars="", content="", useful="", useless="", published="", purchased="", pros=[], cons=[]):
+    def __init__(self, opinion_id = 0, author = "", recomendation="", stars="", content="", useful="", useless="", published="", purchased="", pros=[], cons=[]):
         self.opinion_id = opinion_id
         self.author = author
-        self.recommendation = recommendation
+        self.recomendation = recomendation
         self.stars = stars
         self.content = content
         self.useful = useful
@@ -23,20 +23,12 @@ class Opinion:
 
         return self
     
-    def to_dict(self) -> dict:
-        return {
-             "opinion_id": self.opinion_id,
-             "author": self.author,
-             "recommendation": self.recommendation,
-             "stars": self.stars,
-             "content": self.content,
-             "useful": self.useful,
-             "useless": self.useless,
-             "published": self.published,
-             "purchased": self.purchased,
-             "pros": self.pros,
-             "cons": self.cons
-        }
-    
+    def __str__(self) -> str:
+        return f"opinion_id: {self.opinion_id}<br>" + "<br>".join(f"{key}: {str(getattr(self, key))}" for key in selectors.keys())
+
     def __repr__(self) -> str:
-        return f"Opinion(opinion_id, author, recommendation, stars, content, useful, useless, published, purchased, pros, cons)"
+        return f"Opinion(opinion_id={self.opinion_id}, " + ", ".join(f"{key}={str(getattr(self, key))}" for key in selectors.keys()) + ")"
+
+    def to_dict(self) -> dict:
+        return {"opinion_id": self.opinion_id} | {key: getattr(self, key) for key in selectors.keys()}
+

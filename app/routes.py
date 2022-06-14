@@ -7,7 +7,7 @@ from app.models.product import Product
 
 @app.route('/')
 def index(name="Hello World!"):
-    return render_template("ind ex.html.jinja", text=name)
+    return render_template("index.html.jinja", text=name)
 
 
 @app.route("/extract/", methods=["GET", "POST"])
@@ -21,8 +21,11 @@ def extract():
 
     if product.product_name:
         product.extract_opinions().calculate_stats().draw_charts()
+        product.export_opinions()
+        product.export_product()
     else:
-        pass
+        error = "Ups... coś poszło nie tak"
+        return render_template("extract.html.jinja", error=error)
 
     all_opinions = []
 
