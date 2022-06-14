@@ -1,4 +1,3 @@
-from math import prod
 from app import app
 from flask import render_template, redirect, url_for, request
 import json
@@ -8,7 +7,7 @@ from app.models.product import Product
 
 @app.route('/')
 def index(name="Hello World!"):
-    return render_template("index.html.jinja", text=name)
+    return render_template("ind ex.html.jinja", text=name)
 
 
 @app.route("/extract/", methods=["GET", "POST"])
@@ -21,7 +20,7 @@ def extract():
     product.extract_name()
 
     if product.product_name:
-        product.extract_opinions().draw_charts()
+        product.extract_opinions().calculate_stats().draw_charts()
     else:
         pass
 

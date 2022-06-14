@@ -15,7 +15,6 @@ class Opinion:
         self.pros = pros
         self.cons = cons
 
-        return self
 
     def extract_opinion(self, opinion):
         for key, value in selectors.items():
@@ -24,11 +23,20 @@ class Opinion:
 
         return self
     
-    def __str__(self) -> str:
-        pass
-
-    def __repr__(self) -> str:
-        pass
-
     def to_dict(self) -> dict:
-        pass
+        return {
+             "opinion_id": self.opinion_id,
+             "author": self.author,
+             "recommendation": self.recommendation,
+             "stars": self.stars,
+             "content": self.content,
+             "useful": self.useful,
+             "useless": self.useless,
+             "published": self.published,
+             "purchased": self.purchased,
+             "pros": self.pros,
+             "cons": self.cons
+        }
+    
+    def __repr__(self) -> str:
+        return f"Opinion(opinion_id, author, recommendation, stars, content, useful, useless, published, purchased, pros, cons)"

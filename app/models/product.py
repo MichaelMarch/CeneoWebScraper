@@ -19,7 +19,6 @@ class Product:
         self.cons_count = cons_count
         self.average_score = average_score
 
-        return self
 
     def extract_opinions(self):
         url = f"https://www.ceneo.pl/{self.product_id}#tab-reviews"
@@ -55,8 +54,7 @@ class Product:
             return self
 
         page = BeautifulSoup(response.text, "html.parser")
-        self.product_name = get_item(
-            page, "h1.product-top__product-info__name")
+        self.product_name = get_item(page, "h1.product-top__product-info__name")
 
     def calculate_stats(self):
         opinions = self.opinion_to_df()
@@ -78,46 +76,65 @@ class Product:
         if not os.path.exists("app/static/plots"):
             os.makedirs("app/static/plots")
 
-        recomendation = opinions["recomendation"].value_counts(
+        recomendation = opinions["recommendation"].value_counts(
             dropna=False).sort_index().reindex(["Nie polecam", "Polecam", None], fill_value=0)
 
-        recomendation.plot.pie(
-            label="",
-            autopct=lambda p: "{:.1f}%".format(round(p)) if p > 0 else "",
-            colors=["crimson", "forestgreen", "grey"],
-            labels=["Nie polecam", "Polecam", "Nie mam zdania"]
-        )
+        # recomendation.plot.pie(
+        #     label="",
+        #     autopct=lambda p: "{:.1f}%".format(round(p)) if p > 0 else "",
+        #     colors=["crimson", "forestgreen", "grey"],
+        #     labels=["Nie polecam", "Polecam", "Nie mam zdania"]
+        # )
 
-        plt.title("Rekomendacje")
-        plt.savefig(f"app/static/plots/{self.product_id}_recomendations.png")
-        plt.close()
+        # plt.title("Rekomendacje")
+        # plt.savefig(f"app/static/plots/{self.product_id}_recomendations.png")
+        # plt.close()
 
-        stars = opinions["stars"].value_counts().sort_index().reindex(
-            list(np.arange(0, 5.5, 0.5)))
-        plot = stars.plot.bar(
-            color="pink"
-        )
-        plt.title("Oceny produktu")
-        plt.xlabel("Liczba gwiazdek")
-        plt.ylabel("liczba opinii")
-        plt.grid(True, axis="y")
-        plt.xticks(rotation=0)
-        plt.savefig(f"app/static/plots/{self.product_id}_stars.png")
-        plt.close()
+        # stars = opinions["stars"].value_counts().sort_index().reindex(
+        #     list(np.arange(0, 5.5, 0.5)))
+        # plot = stars.plot.bar(
+        #     color="pink"
+        # )
+        # plt.title("Oceny produktu")
+        # plt.xlabel("Liczba gwiazdek")
+        # plt.ylabel("liczba opinii")
+        # plt.grid(True, axis="y")
+        # plt.xticks(rotation=0)
+        # plt.savefig(f"app/static/plots/{self.product_id}_stars.png")
+        # plt.close()
 
-        
+        return self
+
     def __str__(self) -> str:
-        pass
+        return f"""Product id: {self.product_id}
+Product name: {self.product_name}
+Opinions: {self.opinions}
+Opinions count: {self.opinions_count}
+Pros count: {self.pros_count}
+Cons count: {self.cons_count}
+Average score: {self.average_score}"""
 
     def __repr__(self) -> str:
-        pass
+        return f'Product(product_id,product_name,opinions,opinions_count,pros_count,cons_count,average_score)'
 
     def to_dict(self) -> dict:
-        pass
+        return {
+             "product_id": self.product_id,
+             "product_name": self.product_name,
+             "opinions": self.opinions,
+             "opinions_count": self.opinions_count,
+             "pros_count": self.pros_count,
+             "cons_count": self.cons_count,
+             "average_score": self.average_score
+        }
 
     def export_opinions(self) -> dict:
         if not os.path.exists("app/opinions/"):
             os.makedirs("app/opinions/")
+
+        with open(f"app/opinions/{self.product_id}.json", "w", encoding="UTF-8") as jf:
+            json.dump([opinion.to_dict() for opinion in self.opinions],
+                      jf, indent=4, ensure_ascii=False)
 
     def export_product(self):
         pass
